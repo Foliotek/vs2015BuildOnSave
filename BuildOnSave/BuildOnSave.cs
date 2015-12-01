@@ -116,7 +116,7 @@ namespace BuildOnSave
 
         private void DocumentEvents_DocumentSaved(Document document)
         {
-            string[] knownBuildExtensions = new string[] { "cs" };
+            string[] knownBuildExtensions = new string[] { "cs", "config" };
             if (knownBuildExtensions.Any(e => document.Name.EndsWith("." + e)))
             {
                 var sln = _dte.Solution;
