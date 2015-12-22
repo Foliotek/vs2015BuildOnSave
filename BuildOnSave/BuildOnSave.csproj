@@ -57,7 +57,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="BuildOnSave.cs" />
+    <Compile Include="Guids.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SettingsRepository.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Key.snk" />

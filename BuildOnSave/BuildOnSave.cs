@@ -40,16 +40,12 @@ namespace BuildOnSave
 	/// </remarks>
 	[PackageRegistration(UseManagedResourcesOnly = true)]
 	[InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
-	[Guid(BuildOnSave.PackageGuidString)]
+	[Guid(Guids.PackageGuidString)]
 	[SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
 	[ProvideAutoLoad(UIContextGuids80.NoSolution)]
 	public sealed class BuildOnSave : Package
 	{
-		/// <summary>
-		/// BuildOnSave GUID string.
-		/// </summary>
-		public const string PackageGuidString = "a3315629-609a-4a43-a68e-99bb1552569e";
-
+		#region Initialization
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BuildOnSave"/> class.
 		/// </summary>
@@ -61,8 +57,6 @@ namespace BuildOnSave
 			// initialization is the Initialize method.
 		}
 
-		#region Package Members
-
 		/// <summary>
 		/// Initialization of the package; this method is called right after the package is sited, so this is the place
 		/// where you can put all the initialization code that rely on services provided by VisualStudio.
@@ -70,25 +64,18 @@ namespace BuildOnSave
 		protected override void Initialize()
 		{
 			base.Initialize();
+
 			_dte = Package.GetGlobalService(typeof(DTE)) as DTE2;
 			_statusBar = Package.GetGlobalService(typeof(SVsStatusbar)) as IVsStatusbar;
+			_serviceProvider = GetServiceProvider(_dte);
+			_settings = new Settings(_serviceProvider);
+
 			SetupEvents();
 		}
-		#endregion
 
-
-		#region Custom Foliotek Code
-
-		private DTE2 _dte { get; set; }
-		private Events _dteEvents { get; set; }
-		private DocumentEvents _docEvents { get; set; }
-		private BuildEvents _buildEvents { get; set; }
-		private IVsStatusbar _statusBar { get; set; }
-		private bool BuildRunning { get; set; }
-
-		private int? _estimatedBuildMilliSeconds { get; set; }
-		private DateTime _buildStart { get; set; }
-
+		/// <summary>
+		///		Initializes all the events for this extension
+		/// </summary>
 		private void SetupEvents()
 		{
 			_dteEvents = _dte.Events;
@@ -100,7 +87,23 @@ namespace BuildOnSave
 			_buildEvents.OnBuildBegin += BuildEvents_OnBuildBegin;
 			_buildEvents.OnBuildDone += BuildEvents_OnBuildDone;
 		}
+		#endregion
 
+		#region Properties
+		private DTE2 _dte { get; set; }
+		private Events _dteEvents { get; set; }
+		private DocumentEvents _docEvents { get; set; }
+		private BuildEvents _buildEvents { get; set; }
+		private IVsStatusbar _statusBar { get; set; }
+		private ServiceProvider _serviceProvider { get; set; }
+		private Settings _settings { get; set; }
+		private bool BuildRunning { get; set; }
+
+		private int? _estimatedBuildMilliSeconds { get; set; }
+		private DateTime _buildStart { get; set; }
+		#endregion
+
+		#region Events
 		private void BuildEvents_OnBuildDone(vsBuildScope Scope, vsBuildAction Action)
 		{
 			_estimatedBuildMilliSeconds = DateTime.Now.Subtract(_buildStart).Milliseconds;
@@ -122,6 +125,7 @@ namespace BuildOnSave
 			if (knownBuildExtensions.Any(e => document.Name.EndsWith("." + e)) && !BuildRunning)
 				BuildSolution(document);
 		}
+		#endregion
 
 		//private void StatusBarProgressFinish()
 		//{
@@ -144,6 +148,7 @@ namespace BuildOnSave
 		//    }
 		//}
 
+		#region Methods
 		private void BuildSolution(Document document)
 		{
 			SetBuildStarted();
@@ -151,6 +156,11 @@ namespace BuildOnSave
 			var config = sln.SolutionBuild.ActiveConfiguration.Name;
 			var project = document.ProjectItem.ContainingProject;
 			sln.SolutionBuild.BuildProject(config, project.UniqueName);
+		}
+
+		public static ServiceProvider GetServiceProvider(DTE2 dte)
+		{
+			return new ServiceProvider((Microsoft.VisualStudio.OLE.Interop.IServiceProvider)dte);
 		}
 
 		private void UpdateStatusBar(string text)
@@ -172,7 +182,6 @@ namespace BuildOnSave
 		{
 			BuildRunning = false;
 		}
-
 		#endregion
 	}
 }
