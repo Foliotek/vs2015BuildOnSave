@@ -14,19 +14,20 @@ namespace BuildOnSave
 
 		public Settings(ServiceProvider serviceProvider)
 		{
-			_serviceProvider = serviceProvider;
+			ServiceProvider = serviceProvider;
 			InitializeSettings();
 		}
 
-		private ServiceProvider _serviceProvider { get; set; }
-		private IVsWritableSettingsStore _settingsStore = null;
+		private ServiceProvider ServiceProvider { get; }
+		private IVsWritableSettingsStore _settingsStore;
 		private IVsWritableSettingsStore SettingsStore
 		{
 			get
 			{
+				// If it's null, initialize it before returning
 				if (_settingsStore == null)
 				{
-					IVsSettingsManager settingsManager = _serviceProvider.GetService(typeof(SVsSettingsManager)) as IVsSettingsManager;
+					var settingsManager = ServiceProvider.GetService(typeof(SVsSettingsManager)) as IVsSettingsManager;
 					settingsManager.GetWritableSettingsStore((uint)__VsSettingsScope.SettingsScope_UserSettings, out _settingsStore);
 				}
 				return _settingsStore;
@@ -46,18 +47,22 @@ namespace BuildOnSave
 		{
 			// If property doesn't exist, set default extensions
 			if (!PropertyExists(SettingsRootPath, ExtensionsPropName))
-				SetStringArray(ExtensionsPropName, DefaultExtensions);
+				SetStringCollection(ExtensionsPropName, DefaultExtensions);
 
 			// If property does exist, ensure all defaults are present
 			else
 			{
+				// Get current extensions
 				var currExtensions = GetStringArray(ExtensionsPropName).ToList();
-				var currDefExts = currExtensions.Where(e => DefaultExtensions.Contains(e)).ToList();
+				var nonDefault = currExtensions.Where(e => !DefaultExtensions.Contains(e)).ToList();
 
-				if (currExtensions.Count != DefaultExtensions.Length)
+				// If length of NON-DEFAULT extensions PLUS the length of DEFAULT extensions
+				// is the SAME AS the length of the ORIGINAL list, we know that all defaults
+				// are accounted for
+				if (nonDefault.Count + DefaultExtensions.Length != currExtensions.Count)
 				{
-					currExtensions = currExtensions.Where(e => !DefaultExtensions.Contains(e)).ToList();
 					currExtensions.AddRange(DefaultExtensions);
+					SetStringCollection(ExtensionsPropName, currExtensions.Distinct().ToArray());
 				}
 			}
 		}
@@ -65,7 +70,7 @@ namespace BuildOnSave
 		#region Public Methods
 		public bool CollectionExists(string path)
 		{
-			int exists = 0;
+			int exists;
 			SettingsStore.CollectionExists(path, out exists);
 
 			return ExistenceIntToBool(exists);
@@ -73,7 +78,7 @@ namespace BuildOnSave
 
 		public bool PropertyExists(string path, string key)
 		{
-			int exists = 0;
+			int exists;
 			SettingsStore.PropertyExists(path, key, out exists);
 
 			return ExistenceIntToBool(exists);
@@ -84,7 +89,7 @@ namespace BuildOnSave
 			SettingsStore.SetString(SettingsRootPath, key, value);
 		}
 
-		public void SetStringArray(string key, string[] value)
+		public void SetStringCollection(string key, IEnumerable<string> value)
 		{
 			// Flatten string into form 'extension1,extension2,extension3'
 			var sb = new StringBuilder();
@@ -109,16 +114,17 @@ namespace BuildOnSave
 		public string[] GetStringArray(string key)
 		{
 			string val = GetString(key);
-			return val.Split(',').Where(i => !string.IsNullOrWhiteSpace(i)).ToArray();
+			if (val.Contains(','))
+				return val.Split(',').Where(i => !string.IsNullOrWhiteSpace(i)).ToArray();
+			else
+				return new string[] { val };
 		}
 
-		private bool ExistenceIntToBool(int exists)
+		private static bool ExistenceIntToBool(int exists)
 		{
-			if (exists == 1)
-				return true;
-			else
-				return false;
+			return exists == 1;
 		}
+
 		#endregion
 	}
 }
