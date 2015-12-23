@@ -43,6 +43,8 @@ namespace BuildOnSave
 	[Guid(Guids.PackageGuidString)]
 	[SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
 	[ProvideAutoLoad(UIContextGuids80.NoSolution)]
+	[ProvideMenuResource("Menus.ctmenu", 1)]
+	[ProvideOptionPage(typeof(OptionsPage), "Build On Save", "Settings", 0, 0, true)]
 	public sealed class BuildOnSave : Package
 	{
 		#region Initialization
@@ -67,8 +69,6 @@ namespace BuildOnSave
 
 			_dte = Package.GetGlobalService(typeof(DTE)) as DTE2;
 			_statusBar = Package.GetGlobalService(typeof(SVsStatusbar)) as IVsStatusbar;
-			_serviceProvider = GetServiceProvider(_dte);
-			_settings = new Settings(_serviceProvider);
 
 			SetupEvents();
 		}
@@ -96,7 +96,6 @@ namespace BuildOnSave
 		private BuildEvents _buildEvents { get; set; }
 		private IVsStatusbar _statusBar { get; set; }
 		private ServiceProvider _serviceProvider { get; set; }
-		private Settings _settings { get; set; }
 		private bool BuildRunning { get; set; }
 
 		private int? _estimatedBuildMilliSeconds { get; set; }
@@ -156,11 +155,6 @@ namespace BuildOnSave
 			var config = sln.SolutionBuild.ActiveConfiguration.Name;
 			var project = document.ProjectItem.ContainingProject;
 			sln.SolutionBuild.BuildProject(config, project.UniqueName);
-		}
-
-		public static ServiceProvider GetServiceProvider(DTE2 dte)
-		{
-			return new ServiceProvider((Microsoft.VisualStudio.OLE.Interop.IServiceProvider)dte);
 		}
 
 		private void UpdateStatusBar(string text)
