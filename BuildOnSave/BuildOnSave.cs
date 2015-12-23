@@ -4,20 +4,14 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using System;
-using System.ComponentModel.Design;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Runtime.InteropServices;
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.OLE.Interop;
+using EnvDTE;
+using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.Win32;
-using EnvDTE80;
-using EnvDTE;
+using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace BuildOnSave
 {
@@ -67,8 +61,9 @@ namespace BuildOnSave
 		{
 			base.Initialize();
 
-			_dte = Package.GetGlobalService(typeof(DTE)) as DTE2;
+			_dte = Utilities.GetDTE();
 			_statusBar = Package.GetGlobalService(typeof(SVsStatusbar)) as IVsStatusbar;
+			SettingsRepo = new SettingsRepository();
 
 			SetupEvents();
 		}
@@ -95,7 +90,7 @@ namespace BuildOnSave
 		private DocumentEvents _docEvents { get; set; }
 		private BuildEvents _buildEvents { get; set; }
 		private IVsStatusbar _statusBar { get; set; }
-		private ServiceProvider _serviceProvider { get; set; }
+		private SettingsRepository SettingsRepo { get; set; }
 		private bool BuildRunning { get; set; }
 
 		private int? _estimatedBuildMilliSeconds { get; set; }
@@ -120,7 +115,8 @@ namespace BuildOnSave
 
 		private void DocumentEvents_DocumentSaved(Document document)
 		{
-			string[] knownBuildExtensions = new string[] { "cs", "config" };
+			//string[] knownBuildExtensions = new string[] { "cs", "config" };
+			string[] knownBuildExtensions = SettingsRepo.Extensions.ToArray();
 			if (knownBuildExtensions.Any(e => document.Name.EndsWith("." + e)) && !BuildRunning)
 				BuildSolution(document);
 		}

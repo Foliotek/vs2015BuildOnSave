@@ -3,9 +3,6 @@ using Microsoft.VisualStudio.Shell.Interop;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using EnvDTE;
-using EnvDTE80;
-using Microsoft.VisualStudio.OLE.Interop;
 
 namespace BuildOnSave
 {
@@ -18,8 +15,7 @@ namespace BuildOnSave
 		// Constructor
 		public SettingsRepository()
 		{
-			var _dte = Package.GetGlobalService(typeof (DTE)) as DTE2;
-			ServiceProvider = GetServiceProvider(_dte);
+			ServiceProvider = Utilities.GetServiceProvider();
 			InitializeSettings();
 		}
 
@@ -117,7 +113,8 @@ namespace BuildOnSave
 				sb.Append($"{item.Trim()},");
 			}
 			var flatStr = sb.ToString();
-			flatStr = flatStr.Remove(flatStr.LastIndexOf(','));
+			if (flatStr.Trim(' ', '\n').EndsWith(","))
+				flatStr = flatStr.Remove(flatStr.LastIndexOf(','));
 
 			// Set value
 			SetString(key, flatStr);
@@ -142,11 +139,6 @@ namespace BuildOnSave
 		private static bool ExistenceIntToBool(int exists)
 		{
 			return exists == 1;
-		}
-
-		private static ServiceProvider GetServiceProvider(DTE2 dte)
-		{
-			return new ServiceProvider((IServiceProvider)dte);
 		}
 		#endregion
 	}

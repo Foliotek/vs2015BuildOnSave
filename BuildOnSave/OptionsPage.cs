@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.VisualStudio.Shell;
 using System.ComponentModel;
-using Microsoft.VisualStudio.Shell;
+using System.Linq;
 
 namespace BuildOnSave
 {
@@ -24,11 +20,11 @@ namespace BuildOnSave
 		[Category("Build On Save")]
 		[DisplayName("Extensions")]
 		[Description("Extensions which trigger a build upon saving")]
-		public IEnumerable<string> Extensions
+		public string[] Extensions
 		{
 			get
 			{
-				return SettingsRepo.Extensions;
+				return SettingsRepo.Extensions.ToArray();
 			}
 			set
 			{
