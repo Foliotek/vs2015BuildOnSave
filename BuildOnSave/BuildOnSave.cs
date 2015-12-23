@@ -4,20 +4,14 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using System;
-using System.ComponentModel.Design;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Runtime.InteropServices;
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.OLE.Interop;
+using EnvDTE;
+using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.Win32;
-using EnvDTE80;
-using EnvDTE;
+using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace BuildOnSave
 {
@@ -40,16 +34,14 @@ namespace BuildOnSave
 	/// </remarks>
 	[PackageRegistration(UseManagedResourcesOnly = true)]
 	[InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
-	[Guid(BuildOnSave.PackageGuidString)]
+	[Guid(Guids.PackageGuidString)]
 	[SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
 	[ProvideAutoLoad(UIContextGuids80.NoSolution)]
+	[ProvideMenuResource("Menus.ctmenu", 1)]
+	[ProvideOptionPage(typeof(OptionsPage), "Build On Save", "Settings", 0, 0, true)]
 	public sealed class BuildOnSave : Package
 	{
-		/// <summary>
-		/// BuildOnSave GUID string.
-		/// </summary>
-		public const string PackageGuidString = "a3315629-609a-4a43-a68e-99bb1552569e";
-
+		#region Initialization
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BuildOnSave"/> class.
 		/// </summary>
@@ -61,8 +53,6 @@ namespace BuildOnSave
 			// initialization is the Initialize method.
 		}
 
-		#region Package Members
-
 		/// <summary>
 		/// Initialization of the package; this method is called right after the package is sited, so this is the place
 		/// where you can put all the initialization code that rely on services provided by VisualStudio.
@@ -70,25 +60,17 @@ namespace BuildOnSave
 		protected override void Initialize()
 		{
 			base.Initialize();
-			_dte = Package.GetGlobalService(typeof(DTE)) as DTE2;
+
+			_dte = Utilities.GetDTE();
 			_statusBar = Package.GetGlobalService(typeof(SVsStatusbar)) as IVsStatusbar;
+			SettingsRepo = new SettingsRepository();
+
 			SetupEvents();
 		}
-		#endregion
 
-
-		#region Custom Foliotek Code
-
-		private DTE2 _dte { get; set; }
-		private Events _dteEvents { get; set; }
-		private DocumentEvents _docEvents { get; set; }
-		private BuildEvents _buildEvents { get; set; }
-		private IVsStatusbar _statusBar { get; set; }
-		private bool BuildRunning { get; set; }
-
-		private int? _estimatedBuildMilliSeconds { get; set; }
-		private DateTime _buildStart { get; set; }
-
+		/// <summary>
+		///		Initializes all the events for this extension
+		/// </summary>
 		private void SetupEvents()
 		{
 			_dteEvents = _dte.Events;
@@ -100,7 +82,22 @@ namespace BuildOnSave
 			_buildEvents.OnBuildBegin += BuildEvents_OnBuildBegin;
 			_buildEvents.OnBuildDone += BuildEvents_OnBuildDone;
 		}
+		#endregion
 
+		#region Properties
+		private DTE2 _dte { get; set; }
+		private Events _dteEvents { get; set; }
+		private DocumentEvents _docEvents { get; set; }
+		private BuildEvents _buildEvents { get; set; }
+		private IVsStatusbar _statusBar { get; set; }
+		private SettingsRepository SettingsRepo { get; set; }
+		private bool BuildRunning { get; set; }
+
+		private int? _estimatedBuildMilliSeconds { get; set; }
+		private DateTime _buildStart { get; set; }
+		#endregion
+
+		#region Events
 		private void BuildEvents_OnBuildDone(vsBuildScope Scope, vsBuildAction Action)
 		{
 			_estimatedBuildMilliSeconds = DateTime.Now.Subtract(_buildStart).Milliseconds;
@@ -118,10 +115,12 @@ namespace BuildOnSave
 
 		private void DocumentEvents_DocumentSaved(Document document)
 		{
-			string[] knownBuildExtensions = new string[] { "cs", "config" };
+			//string[] knownBuildExtensions = new string[] { "cs", "config" };
+			string[] knownBuildExtensions = SettingsRepo.Extensions.ToArray();
 			if (knownBuildExtensions.Any(e => document.Name.EndsWith("." + e)) && !BuildRunning)
 				BuildSolution(document);
 		}
+		#endregion
 
 		//private void StatusBarProgressFinish()
 		//{
@@ -144,6 +143,7 @@ namespace BuildOnSave
 		//    }
 		//}
 
+		#region Methods
 		private void BuildSolution(Document document)
 		{
 			SetBuildStarted();
@@ -172,7 +172,6 @@ namespace BuildOnSave
 		{
 			BuildRunning = false;
 		}
-
 		#endregion
 	}
 }
