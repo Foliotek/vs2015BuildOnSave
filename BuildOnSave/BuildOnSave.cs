@@ -64,7 +64,7 @@ namespace BuildOnSave
 			base.Initialize();
 
 			_dte = Utilities.GetDTE();
-			_statusBar = Package.GetGlobalService(typeof(SVsStatusbar)) as IVsStatusbar;
+			_statusBar = Utilities.GetStatusBar();
 			SettingsRepo = new SettingsRepository();
 
 			SetupEvents();

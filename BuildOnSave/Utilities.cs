@@ -1,6 +1,7 @@
 ﻿using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using IServiceProvider = Microsoft.VisualStudio.OLE.Interop.IServiceProvider;
 
 namespace BuildOnSave
@@ -16,6 +17,11 @@ namespace BuildOnSave
 		{
 			var dte = GetDTE();
 			return new ServiceProvider((IServiceProvider)dte);
+		}
+
+		public static IVsStatusbar GetStatusBar()
+		{
+			return Package.GetGlobalService(typeof(SVsStatusbar)) as IVsStatusbar;
 		}
 	}
 }
