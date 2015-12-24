@@ -60,7 +60,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="BuildOnSave.cs" />
-    <Compile Include="Guids.cs" />
     <Compile Include="OptionsPage.cs">
       <SubType>Component</SubType>
     </Compile>

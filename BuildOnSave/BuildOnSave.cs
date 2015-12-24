@@ -34,13 +34,15 @@ namespace BuildOnSave
 	/// </remarks>
 	[PackageRegistration(UseManagedResourcesOnly = true)]
 	[InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
-	[Guid(Guids.PackageGuidString)]
+	[Guid(PackageGuidString)]
 	[SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
 	[ProvideAutoLoad(UIContextGuids80.NoSolution)]
 	[ProvideMenuResource("Menus.ctmenu", 1)]
 	[ProvideOptionPage(typeof(OptionsPage), "Build On Save", "Settings", 0, 0, true)]
 	public sealed class BuildOnSave : Package
 	{
+		private const string PackageGuidString = "a3315629-609a-4a43-a68e-99bb1552569e";
+
 		#region Initialization
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BuildOnSave"/> class.

@@ -15,10 +15,6 @@ namespace BuildOnSave
 		public static ServiceProvider GetServiceProvider()
 		{
 			var dte = GetDTE();
-			return GetServiceProvider(dte);
-		}
-		public static ServiceProvider GetServiceProvider(DTE2 dte)
-		{
 			return new ServiceProvider((IServiceProvider)dte);
 		}
 	}
