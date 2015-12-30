@@ -63,10 +63,18 @@ namespace BuildOnSave
 		{
 			base.Initialize();
 
-			_dte = Utilities.GetDTE();
-			_statusBar = Utilities.GetStatusBar();
+			// Get settings repo
 			SettingsRepo = new SettingsRepository();
 
+			// Stop here if we aren't enabled
+			if (SettingsRepo.AutoBuildEnabled == false)
+				return;
+
+			// Get necessary utilities
+			_dte = Utilities.GetDTE();
+			_statusBar = new StatusBar();
+
+			// Get and bind to events
 			SetupEvents();
 		}
 
@@ -91,7 +99,7 @@ namespace BuildOnSave
 		private Events _dteEvents { get; set; }
 		private DocumentEvents _docEvents { get; set; }
 		private BuildEvents _buildEvents { get; set; }
-		private IVsStatusbar _statusBar { get; set; }
+		private StatusBar _statusBar { get; set; }
 		private SettingsRepository SettingsRepo { get; set; }
 		private bool BuildRunning { get; set; }
 
@@ -100,25 +108,20 @@ namespace BuildOnSave
 		#endregion
 
 		#region Events
+		private void BuildEvents_OnBuildBegin(vsBuildScope Scope, vsBuildAction Action)
+		{
+			BuildStart();
+		}
+
 		private void BuildEvents_OnBuildDone(vsBuildScope Scope, vsBuildAction Action)
 		{
 			_estimatedBuildMilliSeconds = DateTime.Now.Subtract(_buildStart).Milliseconds;
-			UpdateStatusBar("Build Finished");
-			SetBuildFinished();
-			//StatusBarProgressFinish();
+			BuildFinish();
 		}
-
-		private void BuildEvents_OnBuildBegin(vsBuildScope Scope, vsBuildAction Action)
-		{
-			_buildStart = DateTime.Now;
-			UpdateStatusBar("Building");
-			//StatusBarProgressStart();
-		}
-
+		
 		private void DocumentEvents_DocumentSaved(Document document)
 		{
-			//string[] knownBuildExtensions = new string[] { "cs", "config" };
-			string[] knownBuildExtensions = SettingsRepo.Extensions.ToArray();
+			var knownBuildExtensions = SettingsRepo.Extensions.ToArray();
 			if (knownBuildExtensions.Any(e => document.Name.EndsWith("." + e)) && !BuildRunning)
 				BuildSolution(document);
 		}
@@ -148,30 +151,25 @@ namespace BuildOnSave
 		#region Methods
 		private void BuildSolution(Document document)
 		{
-			SetBuildStarted();
 			var sln = _dte.Solution;
-			var config = sln.SolutionBuild.ActiveConfiguration.Name;
-			var project = document.ProjectItem.ContainingProject;
-			sln.SolutionBuild.BuildProject(config, project.UniqueName);
+			//var config = sln.SolutionBuild.ActiveConfiguration.Name;
+			//var project = document.ProjectItem.ContainingProject;
+			//sln.SolutionBuild.BuildProject(config, project.UniqueName);
+			sln.SolutionBuild.Build();
 		}
 
-		private void UpdateStatusBar(string text)
-		{
-			int frozen;
-			_statusBar.IsFrozen(out frozen);
-			if (frozen == 0)
-			{
-				_statusBar.SetText(text);
-			}
-		}
-
-		private void SetBuildStarted()
+		private void BuildStart()
 		{
 			BuildRunning = true;
+			_statusBar.BuildStart();
+			_buildStart = DateTime.Now;
+			
 		}
 
-		private void SetBuildFinished()
+		private void BuildFinish()
 		{
+			_estimatedBuildMilliSeconds = DateTime.Now.Subtract(_buildStart).Milliseconds;
+			_statusBar.BuildFinish();
 			BuildRunning = false;
 		}
 		#endregion

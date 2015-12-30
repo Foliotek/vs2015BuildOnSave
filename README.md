@@ -1,8 +1,5 @@
-# vs2015BuildOnSave
-A Visual Studio 2015 extension to build containing project after saving a file
+# Build On Save
 
-Visual Studio 2015 has the roslyn compiler, but from what I can gather, that's only compatible with .NET 5 projects.  Asp.NET 5, at the time of creating this repository, is still in pre-release mode.
+A Visual Studio 2015 extension to build your solution on saving a document.
 
-Redgates .NET Demon used to perform this task for us, but they've since stopped supporting VS2015.  
-
-This project was quickly thrown together just to have something useable.
+RedGate's [.NET Demon](https://www.red-gate.com/products/dotnet-development/dotnet-demon/) used to perform this task for us, but unfortunately they've retired the project due to the release of the new ["Roslyn" Compiler](https://en.wikipedia.org/wiki/.NET_Compiler_Platform).  While a lot of the features .NET Demon provided were rolled into Roslyn, there is one important feature that they missed.  That feature is the ability to have your solution build upon saving one or many documents.  This extension is the solution to that.
