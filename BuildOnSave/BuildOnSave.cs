@@ -123,7 +123,7 @@ namespace BuildOnSave
 		{
 			var knownBuildExtensions = SettingsRepo.Extensions.ToArray();
 			if (knownBuildExtensions.Any(e => document.Name.EndsWith("." + e)) && !BuildRunning)
-				BuildSolution(document);
+				BuildSolution();
 		}
 		#endregion
 
@@ -149,13 +149,17 @@ namespace BuildOnSave
 		//}
 
 		#region Methods
-		private void BuildSolution(Document document)
+		private void BuildSolution()
 		{
 			var sln = _dte.Solution;
-			//var config = sln.SolutionBuild.ActiveConfiguration.Name;
-			//var project = document.ProjectItem.ContainingProject;
-			//sln.SolutionBuild.BuildProject(config, project.UniqueName);
 			sln.SolutionBuild.Build();
+		}
+		private void BuildProject(Document document)
+		{
+			var sln = _dte.Solution;
+			var config = sln.SolutionBuild.ActiveConfiguration.Name;
+			var project = document.ProjectItem.ContainingProject;
+			sln.SolutionBuild.BuildProject(config, project.UniqueName);
 		}
 
 		private void BuildStart()

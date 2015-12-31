@@ -1,7 +1,5 @@
 ﻿using Microsoft.VisualStudio.Shell.Interop;
-using System;
 using System.Timers;
-using System.Linq;
 
 namespace BuildOnSave
 {
@@ -9,22 +7,39 @@ namespace BuildOnSave
 	{
 		private const int DotIntervalMilliseconds = 650;
 		private IVsStatusbar statusBar { get; set; }
-		private object _icon { get; set; }
-		private Timer _timer { get; set; }
+		private short _icon { get; set; }
+		private Timer _dotTimer { get; set; }
 		private string _dots { get; set; }
-		private int _progressBarSteps { get; set; }
-		private int _currentProgressBarStep { get; set; }
-		private int _progressBarPercent
-		{
-			get
-			{
-				return (int)Math.Round((decimal)((_currentProgressBarStep / _progressBarSteps) * 100));
-			}
-		}
+		//private uint _progressBarTotalSteps { get; set; }
+		//private uint _progressBarStepCount { get; set; }
+		//private uint statusBarCookie = 0;
 
 		public StatusBar()
-		{
+		{ 
 			statusBar = Utilities.GetStatusBar();
+			//var projects = Utilities.GetProjects().ToList();
+			//_progressBarStepCount = 0;
+			//_progressBarTotalSteps = (uint)projects.Count;
+			//OnBuildDone += StatusBar_OnBuildDone;
+		}
+
+		public void BuildStart()
+		{
+			if (_icon != Icons.Build)
+				SetIcon(Icons.Build);
+			//InitializeProgressBar();
+			SetText("Building", _icon);
+			StartDots();
+			Freeze();
+		}
+
+		public void BuildFinish()
+		{
+			//ClearProgressBar();
+			StopDots();
+			Unfreeze();
+			StopIcon();
+			SetText("Build finished");
 		}
 
 		#region Events
@@ -37,22 +52,6 @@ namespace BuildOnSave
 		}
 		#endregion
 
-		public void BuildStart()
-		{
-			SetIcon(Icons.Build);
-			SetText("Building", _icon);
-			StartDots();
-			Freeze();
-		}
-
-		public void BuildFinish()
-		{
-			StopDots();
-			Unfreeze();
-			SetText("Build finished");
-			StopAnimation();
-		}
-
 		#region Basic Functions
 		private string CurrentText
 		{
@@ -64,11 +63,24 @@ namespace BuildOnSave
 			}
 		}
 
-		private void InitializeProgressBar()
-		{
-			var projects = Utilities.GetProjects().ToList();
-			_progressBarSteps = projects.Count;
-		}
+		//private void InitializeProgressBar()
+		//{
+		//	Unfreeze();
+		//	statusBar.Progress(ref statusBarCookie, 1, CurrentText, _progressBarStepCount, _progressBarTotalSteps);
+		//	Freeze();
+		//}
+		//private void ClearProgressBar()
+		//{
+		//	Unfreeze();
+		//	statusBar.Progress(ref statusBarCookie, 0, CurrentText, _progressBarStepCount, _progressBarTotalSteps);
+		//	Freeze();
+		//}
+		//private void IncrementProgressBar()
+		//{
+		//	Unfreeze();
+		//	statusBar.Progress(ref statusBarCookie, 1, CurrentText, _progressBarStepCount, _progressBarTotalSteps);
+		//	Freeze();
+		//}
 		private void Clear()
 		{
 			statusBar.Clear();
@@ -82,21 +94,21 @@ namespace BuildOnSave
 				statusBar.SetText(text);
 			}
 		}
-		private void SetText(string text, object icon)
+		private void SetText(string text, short icon)
 		{
 			SetIcon(icon);
-			StartAnimation();
+			StartIcon();
 			SetText(text);
 		}
-		private void StartAnimation()
+		private void StartIcon()
 		{
 			statusBar.Animation(1, _icon);
 		}
-		private void StopAnimation()
+		private void StopIcon()
 		{
 			statusBar.Animation(0, _icon);
 		}
-		private void SetIcon(object icon)
+		private void SetIcon(short icon)
 		{
 			_icon = icon;
 		}
@@ -110,14 +122,14 @@ namespace BuildOnSave
 		}
 		private void StartDots()
 		{
-			_timer = new System.Timers.Timer(DotIntervalMilliseconds);
-			_timer.Elapsed += timer_Elapsed;
-			_timer.Start();
+			_dotTimer = new Timer(DotIntervalMilliseconds);
+			_dotTimer.Elapsed += timer_Elapsed;
+			_dotTimer.Start();
 		}
 		private void StopDots()
 		{
-			_timer.Stop();
-			_timer.Dispose();
+			_dotTimer.Stop();
+			_dotTimer.Dispose();
 		}
 		private void IncrementDots()
 		{
