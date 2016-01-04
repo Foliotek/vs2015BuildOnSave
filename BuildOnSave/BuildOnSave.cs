@@ -63,13 +63,6 @@ namespace BuildOnSave
 		{
 			base.Initialize();
 
-			// Get settings repo
-			SettingsRepo = new SettingsRepository();
-
-			// Stop here if we aren't enabled
-			if (SettingsRepo.AutoBuildEnabled == false)
-				return;
-
 			// Get necessary utilities
 			_dte = Utilities.GetDTE();
 			StatusBar = new StatusBar();
@@ -100,7 +93,6 @@ namespace BuildOnSave
 		private DocumentEvents _docEvents { get; set; }
 		private BuildEvents _buildEvents { get; set; }
 		private StatusBar StatusBar { get; set; }
-		private SettingsRepository SettingsRepo { get; set; }
 		private bool BuildRunning { get; set; }
 		#endregion
 
@@ -117,9 +109,19 @@ namespace BuildOnSave
 		
 		private void DocumentEvents_DocumentSaved(Document document)
 		{
-			var knownBuildExtensions = SettingsRepo.Extensions.ToArray();
-			if (knownBuildExtensions.Any(e => document.Name.EndsWith("." + e)) && !BuildRunning)
-				BuildSolution();
+			// Don't do anything if we're not enabled
+			if (Settings.AutoBuildEnabled == false)
+				return;
+
+			// If document extension is in array of buildable extensions, start build
+			if (Settings.Extensions.ToArray().Any(e => document.Name.EndsWith("." + e)) && !BuildRunning)
+			{
+				// Decide if entire solution should be built, or just project containing modified document
+				if (Settings.BuildEntireSolution)
+					BuildSolution();
+				else
+					BuildProject(document);
+			}
 		}
 		#endregion
 
@@ -141,12 +143,12 @@ namespace BuildOnSave
 		{
 			BuildRunning = true;
 			StatusBar.BuildStart();
-			
 		}
 
 		private void BuildFinish()
 		{
-			StatusBar.BuildFinish();
+			bool buildSuccess = !Utilities.IntToBool(_dte.Solution.SolutionBuild.LastBuildInfo);
+			StatusBar.BuildFinish(buildSuccess);
 			BuildRunning = false;
 		}
 		#endregion

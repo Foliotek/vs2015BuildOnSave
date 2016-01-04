@@ -80,7 +80,7 @@ namespace BuildOnSave
 		}
 
 		/// <summary>
-		/// Converts an integer to a boolean value.  [1 = true | anything else = falise]
+		/// Converts an integer to a boolean value.  [1 = true | anything else = false]
 		/// </summary>
 		/// <param name="value">Integer to be converted to boolean (1 or 0)</param>
 		/// <returns>Boolean representing the integer value passed in</returns>

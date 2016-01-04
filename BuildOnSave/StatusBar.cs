@@ -39,13 +39,17 @@ namespace BuildOnSave
 		/// <summary>
 		/// Takes the status bar out of build mode
 		/// </summary>
-		public void BuildFinish()
+		public void BuildFinish(bool success)
 		{
 			//ClearProgressBar();
 			StopDots();
 			Unfreeze();
 			StopIcon();
-			SetText("Build finished");
+
+			if (success)
+				SetText("Build successful");
+			else
+				SetText("Build failed");
 		}
 
 		#region Events

@@ -8,47 +8,49 @@ namespace BuildOnSave
 	{
 		private const string CategoryName = "Build On Save";
 
-		private SettingsRepository _settingsRepo;
-		private SettingsRepository SettingsRepo
+		[Category(CategoryName)]
+		[DisplayName("Build Entire Solution")]
+		[Description("Determines whether the entire solution should be built or just the project containing the modified document")]
+		public bool BuildEntireSolution
 		{
 			get
 			{
-				if (_settingsRepo == null)
-					_settingsRepo = new SettingsRepository();
-				return _settingsRepo;
+				return Settings.BuildEntireSolution;
+			}
+			set
+			{
+				Settings.BuildEntireSolution = value;
 			}
 		}
 
 		#region Public Settings
 		[Category(CategoryName)]
 		[DisplayName("Enabled")]
-		[Description("Automatically build solution on document save.  Visual Studio must be restarted for this change to take effect.")]
+		[Description("Determines whether a build should triggered upon document save")]
 		public bool Enabled
 		{
 			get
 			{
-				return SettingsRepo.AutoBuildEnabled;
+				return Settings.AutoBuildEnabled;
 			}
 			set
 			{
-				SettingsRepo.AutoBuildEnabled = value;
-				SettingsRepo.SaveAutoBuildEnabled();
+				Settings.AutoBuildEnabled = value;
 			}
 		}
 
 		[Category(CategoryName)]
 		[DisplayName("Extensions")]
-		[Description("Extensions which trigger a build upon saving.  Visual Studio must be restarted for this change to take effect.")]
+		[Description("Document extensions which trigger a build upon saving a document")]
 		public string[] Extensions
 		{
 			get
 			{
-				return SettingsRepo.Extensions.ToArray();
+				return Settings.Extensions.ToArray();
 			}
 			set
 			{
-				SettingsRepo.Extensions = value;
-				SettingsRepo.SaveExtensions();
+				Settings.Extensions = value;
 			}
 		}
 		#endregion
