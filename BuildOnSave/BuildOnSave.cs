@@ -72,7 +72,7 @@ namespace BuildOnSave
 
 			// Get necessary utilities
 			_dte = Utilities.GetDTE();
-			_statusBar = new StatusBar();
+			StatusBar = new StatusBar();
 
 			// Get and bind to events
 			SetupEvents();
@@ -99,12 +99,9 @@ namespace BuildOnSave
 		private Events _dteEvents { get; set; }
 		private DocumentEvents _docEvents { get; set; }
 		private BuildEvents _buildEvents { get; set; }
-		private StatusBar _statusBar { get; set; }
+		private StatusBar StatusBar { get; set; }
 		private SettingsRepository SettingsRepo { get; set; }
 		private bool BuildRunning { get; set; }
-
-		private int? _estimatedBuildMilliSeconds { get; set; }
-		private DateTime _buildStart { get; set; }
 		#endregion
 
 		#region Events
@@ -115,7 +112,6 @@ namespace BuildOnSave
 
 		private void BuildEvents_OnBuildDone(vsBuildScope Scope, vsBuildAction Action)
 		{
-			_estimatedBuildMilliSeconds = DateTime.Now.Subtract(_buildStart).Milliseconds;
 			BuildFinish();
 		}
 		
@@ -126,27 +122,6 @@ namespace BuildOnSave
 				BuildSolution();
 		}
 		#endregion
-
-		//private void StatusBarProgressFinish()
-		//{
-		//    uint cookie = 0;
-		//    _statusBar.Progress(ref cookie, 1, "Build Finished", 1, 1);
-		//}
-		//private void StatusBarProgressStart()
-		//{
-		//    new System.Threading.Thread(new ThreadStart(_StartBar)).Start();
-		//}
-		//private void _StartBar()
-		//{
-		//    uint cookie = 0;
-		//    _statusBar.Progress(ref cookie, 1, "", 0, 0);
-		//    uint max = (uint)(_estimatedBuildMilliSeconds.HasValue ? (_estimatedBuildMilliSeconds.Value / 100) : 5);
-		//    for (uint i = 1; i <= max; i++)
-		//    {
-		//        _statusBar.Progress(ref cookie, 1, "Building", i, max);
-		//        System.Threading.Thread.Sleep(1000);
-		//    }
-		//}
 
 		#region Methods
 		private void BuildSolution()
@@ -165,15 +140,13 @@ namespace BuildOnSave
 		private void BuildStart()
 		{
 			BuildRunning = true;
-			_statusBar.BuildStart();
-			_buildStart = DateTime.Now;
+			StatusBar.BuildStart();
 			
 		}
 
 		private void BuildFinish()
 		{
-			_estimatedBuildMilliSeconds = DateTime.Now.Subtract(_buildStart).Milliseconds;
-			_statusBar.BuildFinish();
+			StatusBar.BuildFinish();
 			BuildRunning = false;
 		}
 		#endregion

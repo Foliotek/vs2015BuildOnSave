@@ -95,10 +95,18 @@ namespace BuildOnSave
 			// Set Enabled
 			SaveAutoBuildEnabled();
 		}
+
+		/// <summary>
+		///		Saves changes to extensions
+		/// </summary>
 		public void SaveExtensions()
 		{
 			SetStringCollection(ExtensionsPropName, Extensions);
 		}
+
+		/// <summary>
+		///		Saves changes to AutoBuildEnabled
+		/// </summary>
 		public void SaveAutoBuildEnabled()
 		{
 			SetBool(BuildOnSaveEnabledPropName, AutoBuildEnabled);

@@ -23,6 +23,9 @@ namespace BuildOnSave
 			//OnBuildDone += StatusBar_OnBuildDone;
 		}
 
+		/// <summary>
+		/// Puts the status bar into build mode
+		/// </summary>
 		public void BuildStart()
 		{
 			if (_icon != Icons.Build)
@@ -33,6 +36,9 @@ namespace BuildOnSave
 			Freeze();
 		}
 
+		/// <summary>
+		/// Takes the status bar out of build mode
+		/// </summary>
 		public void BuildFinish()
 		{
 			//ClearProgressBar();

@@ -12,22 +12,38 @@ namespace BuildOnSave
 	public static class Utilities
 	{
 		#region Public
+		/// <summary>
+		/// Gets the current DTE (Development Tools Environment) object
+		/// </summary>
+		/// <returns></returns>
 		public static DTE2 GetDTE()
 		{
 			return Package.GetGlobalService(typeof (DTE)) as DTE2;
 		}
 
+		/// <summary>
+		/// Gets an insance of the Visual Studio Service Provider
+		/// </summary>
+		/// <returns></returns>
 		public static ServiceProvider GetServiceProvider()
 		{
 			var dte = GetDTE();
 			return new ServiceProvider((IServiceProvider) dte);
 		}
 
+		/// <summary>
+		/// Gets the current status bar object
+		/// </summary>
+		/// <returns></returns>
 		public static IVsStatusbar GetStatusBar()
 		{
 			return Package.GetGlobalService(typeof (SVsStatusbar)) as IVsStatusbar;
 		}
 
+		/// <summary>
+		/// Gets the current solution object
+		/// </summary>
+		/// <returns></returns>
 		public static IVsSolution GetSolution()
 		{
 			return Package.GetGlobalService(typeof (IVsSolution)) as IVsSolution;
@@ -47,6 +63,10 @@ namespace BuildOnSave
 			}
 		}
 
+		/// <summary>
+		/// Gets the number of projects to be built under the current solution configuration
+		/// </summary>
+		/// <returns></returns>
 		public static int GetNumberOfProjectsToBuild()
 		{
 			int count = 0;
