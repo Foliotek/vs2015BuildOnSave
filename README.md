@@ -12,6 +12,7 @@ To install this extension, just grab [`BuildOnSave.vsix`](/dist/BuildOnSave.vsix
 ### Configuration
 This extension provides an options page located under `Tools -> Options -> Build On Save`.
 
-- **Enabled**:  Determines whether a build should be triggered upon saving a document.
-- **Build Entire Solution**:  Determines whether the entire solution should be built or just the project containing the modified document.
-- **Extensions**:  Document extensions which trigger a build upon saving a document.
+**Options**: [(**&lt;default&gt;**) &lt;description&gt;]
+- **Enabled**: (**true**)  Determines whether a build should be triggered upon saving a document.
+- **Build Entire Solution**: (**false**)  Determines whether the entire solution should be built or just the project containing the modified document.
+- **Extensions**: (**cs, config**)  Document extensions which trigger a build upon saving a document.
