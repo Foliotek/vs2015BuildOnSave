@@ -9,7 +9,8 @@ namespace BuildOnSave
 	public class SettingsRepository
 	{
 		private const string SettingsRootPath = @"BuildOnSave\Settings\";
-		private const string ExtensionsPropName = @"Extensions";
+		private const string ExtensionsPropName = "Extensions";
+		private const string BuildOnSaveEnabledPropName = "AutoBuildEnabled";
 		private readonly string[] DefaultExtensions = { "cs", "config" };
 
 		// Constructor
@@ -38,19 +39,24 @@ namespace BuildOnSave
 		private void InitializeSettings()
 		{
 			// Ensure root collection exists
-			if (!CollectionExists(SettingsRootPath))
+			if (!CollectionExists())
 				SettingsStore.CreateCollection(SettingsRootPath);
 
-			// Ensure default extensions
+			// Ensure default extensions are set in registry
 			EnsureDefaultExtensions();
 
 			// Initialize public properties
 			Extensions = GetStringCollection(ExtensionsPropName);
+			AutoBuildEnabled = GetBool(BuildOnSaveEnabledPropName, true);
 		}
 		private void EnsureDefaultExtensions()
 		{
+			// If property isn't set, set Enabled = true
+			if (!PropertyExists(BuildOnSaveEnabledPropName))
+				SetBool(BuildOnSaveEnabledPropName, true);
+
 			// If property doesn't exist, set default extensions
-			if (!PropertyExists(SettingsRootPath, ExtensionsPropName))
+			if (!PropertyExists(ExtensionsPropName))
 				SetStringCollection(ExtensionsPropName, DefaultExtensions);
 
 			// If property does exist, ensure all defaults are present
@@ -58,12 +64,12 @@ namespace BuildOnSave
 			{
 				// Get current extensions
 				var currExtensions = GetStringCollection(ExtensionsPropName).ToList();
-				var nonDefault = currExtensions.Where(e => !DefaultExtensions.Contains(e)).ToList();
+				var nonDefault = currExtensions.Where(e => !DefaultExtensions.Contains(e));
 
 				// If length of NON-DEFAULT extensions PLUS the length of DEFAULT extensions
-				// is the SAME AS the length of the ORIGINAL list, we know that all defaults
+				// is the SAME AS the length of the ORIGINAL list, we can assume that all defaults
 				// are accounted for
-				if (nonDefault.Count + DefaultExtensions.Length != currExtensions.Count)
+				if (nonDefault.Count() + DefaultExtensions.Length != currExtensions.Count)
 				{
 					currExtensions.AddRange(DefaultExtensions);
 					SetStringCollection(ExtensionsPropName, currExtensions.Distinct().ToArray());
@@ -72,36 +78,65 @@ namespace BuildOnSave
 		}
 
 		#region Public
-		// Properties
+		/// <summary>
+		///		The collection of file extensions that exist in the repository
+		/// </summary>
 		public IEnumerable<string> Extensions { get; set; }
+		public bool AutoBuildEnabled { get; set; }
 
-		// Methods
-		public void SaveChanges()
+		/// <summary>
+		///		Saves changes to ALL the public properties of this class
+		/// </summary>
+		public void SaveAllChanges()
+		{
+			// Set extensions
+			SaveExtensions();
+
+			// Set Enabled
+			SaveAutoBuildEnabled();
+		}
+
+		/// <summary>
+		///		Saves changes to extensions
+		/// </summary>
+		public void SaveExtensions()
 		{
 			SetStringCollection(ExtensionsPropName, Extensions);
+		}
+
+		/// <summary>
+		///		Saves changes to AutoBuildEnabled
+		/// </summary>
+		public void SaveAutoBuildEnabled()
+		{
+			SetBool(BuildOnSaveEnabledPropName, AutoBuildEnabled);
 		}
 		#endregion
 
 		#region Private Methods
-		private bool CollectionExists(string path)
-		{
-			int exists;
-			SettingsStore.CollectionExists(path, out exists);
-
-			return ExistenceIntToBool(exists);
-		}
-
-		private bool PropertyExists(string path, string key)
+		private bool PropertyExists(string key, string path = SettingsRootPath)
 		{
 			int exists;
 			SettingsStore.PropertyExists(path, key, out exists);
 
-			return ExistenceIntToBool(exists);
+			return Utilities.IntToBool(exists);
 		}
 
-		private void SetString(string key, string value)
+		private bool CollectionExists(string path = SettingsRootPath)
 		{
-			SettingsStore.SetString(SettingsRootPath, key, value);
+			int exists;
+			SettingsStore.CollectionExists(path, out exists);
+
+			return Utilities.IntToBool(exists);
+		}
+
+		private IEnumerable<string> GetStringCollection(string key)
+		{
+			string val = GetString(key);
+			if (val.Contains(','))
+				return val.Split(',').Where(i => !string.IsNullOrWhiteSpace(i)).ToArray();
+			else
+				return new[] { val };
 		}
 
 		private void SetStringCollection(string key, IEnumerable<string> value)
@@ -120,25 +155,28 @@ namespace BuildOnSave
 			SetString(key, flatStr);
 		}
 
-		private string GetString(string key)
+		private string GetString(string key, string defaultValue = "")
 		{
 			string value;
 			SettingsStore.GetStringOrDefault(SettingsRootPath, key, "", out value);
 			return value;
 		}
 
-		private IEnumerable<string> GetStringCollection(string key)
+		private void SetString(string key, string value)
 		{
-			string val = GetString(key);
-			if (val.Contains(','))
-				return val.Split(',').Where(i => !string.IsNullOrWhiteSpace(i)).ToArray();
-			else
-				return new [] { val };
+			SettingsStore.SetString(SettingsRootPath, key, value);
 		}
 
-		private static bool ExistenceIntToBool(int exists)
+		private bool GetBool(string key, bool defaultValue = false)
 		{
-			return exists == 1;
+			int value = Utilities.BoolToInt(defaultValue);
+			SettingsStore.GetBoolOrDefault(SettingsRootPath, key, value, out value);
+			return Utilities.IntToBool(value);
+		}
+
+		private void SetBool(string key, bool value)
+		{
+			SettingsStore.SetBool(SettingsRootPath, key, Utilities.BoolToInt(value));
 		}
 		#endregion
 	}

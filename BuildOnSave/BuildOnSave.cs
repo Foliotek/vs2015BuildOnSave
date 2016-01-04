@@ -63,10 +63,18 @@ namespace BuildOnSave
 		{
 			base.Initialize();
 
-			_dte = Utilities.GetDTE();
-			_statusBar = Utilities.GetStatusBar();
+			// Get settings repo
 			SettingsRepo = new SettingsRepository();
 
+			// Stop here if we aren't enabled
+			if (SettingsRepo.AutoBuildEnabled == false)
+				return;
+
+			// Get necessary utilities
+			_dte = Utilities.GetDTE();
+			StatusBar = new StatusBar();
+
+			// Get and bind to events
 			SetupEvents();
 		}
 
@@ -91,87 +99,54 @@ namespace BuildOnSave
 		private Events _dteEvents { get; set; }
 		private DocumentEvents _docEvents { get; set; }
 		private BuildEvents _buildEvents { get; set; }
-		private IVsStatusbar _statusBar { get; set; }
+		private StatusBar StatusBar { get; set; }
 		private SettingsRepository SettingsRepo { get; set; }
 		private bool BuildRunning { get; set; }
-
-		private int? _estimatedBuildMilliSeconds { get; set; }
-		private DateTime _buildStart { get; set; }
 		#endregion
 
 		#region Events
-		private void BuildEvents_OnBuildDone(vsBuildScope Scope, vsBuildAction Action)
-		{
-			_estimatedBuildMilliSeconds = DateTime.Now.Subtract(_buildStart).Milliseconds;
-			UpdateStatusBar("Build Finished");
-			SetBuildFinished();
-			//StatusBarProgressFinish();
-		}
-
 		private void BuildEvents_OnBuildBegin(vsBuildScope Scope, vsBuildAction Action)
 		{
-			_buildStart = DateTime.Now;
-			UpdateStatusBar("Building");
-			//StatusBarProgressStart();
+			BuildStart();
 		}
 
+		private void BuildEvents_OnBuildDone(vsBuildScope Scope, vsBuildAction Action)
+		{
+			BuildFinish();
+		}
+		
 		private void DocumentEvents_DocumentSaved(Document document)
 		{
-			//string[] knownBuildExtensions = new string[] { "cs", "config" };
-			string[] knownBuildExtensions = SettingsRepo.Extensions.ToArray();
+			var knownBuildExtensions = SettingsRepo.Extensions.ToArray();
 			if (knownBuildExtensions.Any(e => document.Name.EndsWith("." + e)) && !BuildRunning)
-				BuildSolution(document);
+				BuildSolution();
 		}
 		#endregion
 
-		//private void StatusBarProgressFinish()
-		//{
-		//    uint cookie = 0;
-		//    _statusBar.Progress(ref cookie, 1, "Build Finished", 1, 1);
-		//}
-		//private void StatusBarProgressStart()
-		//{
-		//    new System.Threading.Thread(new ThreadStart(_StartBar)).Start();
-		//}
-		//private void _StartBar()
-		//{
-		//    uint cookie = 0;
-		//    _statusBar.Progress(ref cookie, 1, "", 0, 0);
-		//    uint max = (uint)(_estimatedBuildMilliSeconds.HasValue ? (_estimatedBuildMilliSeconds.Value / 100) : 5);
-		//    for (uint i = 1; i <= max; i++)
-		//    {
-		//        _statusBar.Progress(ref cookie, 1, "Building", i, max);
-		//        System.Threading.Thread.Sleep(1000);
-		//    }
-		//}
-
 		#region Methods
-		private void BuildSolution(Document document)
+		private void BuildSolution()
 		{
-			SetBuildStarted();
+			var sln = _dte.Solution;
+			sln.SolutionBuild.Build();
+		}
+		private void BuildProject(Document document)
+		{
 			var sln = _dte.Solution;
 			var config = sln.SolutionBuild.ActiveConfiguration.Name;
 			var project = document.ProjectItem.ContainingProject;
 			sln.SolutionBuild.BuildProject(config, project.UniqueName);
 		}
 
-		private void UpdateStatusBar(string text)
-		{
-			int frozen;
-			_statusBar.IsFrozen(out frozen);
-			if (frozen == 0)
-			{
-				_statusBar.SetText(text);
-			}
-		}
-
-		private void SetBuildStarted()
+		private void BuildStart()
 		{
 			BuildRunning = true;
+			StatusBar.BuildStart();
+			
 		}
 
-		private void SetBuildFinished()
+		private void BuildFinish()
 		{
+			StatusBar.BuildFinish();
 			BuildRunning = false;
 		}
 		#endregion
