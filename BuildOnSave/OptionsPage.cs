@@ -8,6 +8,7 @@ namespace BuildOnSave
 	{
 		private const string CategoryName = "Build On Save";
 
+		#region Public Settings
 		[Category(CategoryName)]
 		[DisplayName("Build Entire Solution")]
 		[Description("Determines whether the entire solution should be built or just the project containing the modified document")]
@@ -23,7 +24,6 @@ namespace BuildOnSave
 			}
 		}
 
-		#region Public Settings
 		[Category(CategoryName)]
 		[DisplayName("Enabled")]
 		[Description("Determines whether a build should triggered upon document save")]
