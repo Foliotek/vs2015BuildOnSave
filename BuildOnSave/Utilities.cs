@@ -84,9 +84,9 @@ namespace BuildOnSave
 		/// </summary>
 		/// <param name="value">Integer to be converted to boolean (1 or 0)</param>
 		/// <returns>Boolean representing the integer value passed in</returns>
-		public static bool IntToBool(int value)
+		public static bool IntToBool(int value, int trueValue = 1)
 		{
-			return value == 1;
+			return value == trueValue;
 		}
 
 		/// <summary>

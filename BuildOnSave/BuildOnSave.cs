@@ -147,7 +147,7 @@ namespace BuildOnSave
 
 		private void BuildFinish()
 		{
-			bool buildSuccess = !Utilities.IntToBool(_dte.Solution.SolutionBuild.LastBuildInfo);
+			bool buildSuccess = Utilities.IntToBool(_dte.Solution.SolutionBuild.LastBuildInfo, 0);
 			StatusBar.BuildFinish(buildSuccess);
 			BuildRunning = false;
 		}
