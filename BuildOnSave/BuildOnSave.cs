@@ -76,14 +76,19 @@ namespace BuildOnSave
 		/// </summary>
 		private void SetupEvents()
 		{
+			// Get necessary events opjects
 			_dteEvents = _dte.Events;
 			_docEvents = _dteEvents.DocumentEvents;
 			_buildEvents = _dteEvents.BuildEvents;
 
+			// Set event handler for document save
 			_docEvents.DocumentSaved += DocumentEvents_DocumentSaved;
 
+			// Set build event handlers
 			_buildEvents.OnBuildBegin += BuildEvents_OnBuildBegin;
 			_buildEvents.OnBuildDone += BuildEvents_OnBuildDone;
+			_buildEvents.OnBuildProjConfigBegin += BuildEvents_OnBuildProjConfigBegin;
+			_buildEvents.OnBuildProjConfigDone += BuildEvents_OnBuildProjConfigDone;
 		}
 		#endregion
 
@@ -99,14 +104,28 @@ namespace BuildOnSave
 		#region Events
 		private void BuildEvents_OnBuildBegin(vsBuildScope Scope, vsBuildAction Action)
 		{
-			BuildStart();
+			// Ignore everything except for "build" action
+			if (Action == vsBuildAction.vsBuildActionBuild)
+				BuildStart();
 		}
-
 		private void BuildEvents_OnBuildDone(vsBuildScope Scope, vsBuildAction Action)
 		{
-			BuildFinish();
+
+			// Ignore everything except for "build" action
+			if (Action == vsBuildAction.vsBuildActionBuild)
+				BuildFinish();
 		}
-		
+		private void BuildEvents_OnBuildProjConfigBegin(string Project, string ProjectConfig, string Platform, string SolutionConfig)
+		{
+			if (Settings.BuildEntireSolution)
+				StatusBar.IncrementProgressBar();
+		}
+		private void BuildEvents_OnBuildProjConfigDone(string Project, string ProjectConfig, string Platform, string SolutionConfig, bool Success)
+		{
+			if (Settings.BuildEntireSolution)
+				StatusBar.IncrementProgressBar();
+		}
+
 		private void DocumentEvents_DocumentSaved(Document document)
 		{
 			// Don't do anything if we're not enabled

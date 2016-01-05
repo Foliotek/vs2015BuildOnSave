@@ -1,5 +1,8 @@
 ﻿using Microsoft.VisualStudio.Shell.Interop;
+using System;
+using System.Linq;
 using System.Timers;
+using System.Text.RegularExpressions;
 
 namespace BuildOnSave
 {
@@ -10,17 +13,14 @@ namespace BuildOnSave
 		private short _icon { get; set; }
 		private Timer _dotTimer { get; set; }
 		private string _dots { get; set; }
-		//private uint _progressBarTotalSteps { get; set; }
-		//private uint _progressBarStepCount { get; set; }
-		//private uint statusBarCookie = 0;
+		private uint _progressBarTotalSteps { get; set; }
+		private uint _progressBarStepCount { get; set; }
+		private uint statusBarCookie = 0;
 
 		public StatusBar()
 		{ 
 			statusBar = Utilities.GetStatusBar();
-			//var projects = Utilities.GetProjects().ToList();
-			//_progressBarStepCount = 0;
-			//_progressBarTotalSteps = (uint)projects.Count;
-			//OnBuildDone += StatusBar_OnBuildDone;
+			_progressBarStepCount = 0;
 		}
 
 		/// <summary>
@@ -28,11 +28,21 @@ namespace BuildOnSave
 		/// </summary>
 		public void BuildStart()
 		{
+			// If icon has not yet been set to the "building" icon, set it
 			if (_icon != Icons.Build)
 				SetIcon(Icons.Build);
-			//InitializeProgressBar();
+
+			// If we're building the entire solution, initialize the progress bar
+			if (Settings.BuildEntireSolution)
+				InitializeProgressBar();
+
+			// Set text and icon
 			SetText("Building", _icon);
+
+			// Start dots animation
 			StartDots();
+
+			// Freeze the status bar
 			Freeze();
 		}
 
@@ -41,15 +51,36 @@ namespace BuildOnSave
 		/// </summary>
 		public void BuildFinish(bool success)
 		{
-			//ClearProgressBar();
+			// If we're building the entire solution, the progress bar was initialized and needs to be cleared
+			if (Settings.BuildEntireSolution)
+				ClearProgressBar();
+
+			// Stop dots animation
 			StopDots();
-			Unfreeze();
+
+			// Stop the icon animation
 			StopIcon();
 
+			// Unfreeze the status bar
+			Unfreeze();
+
+			// Set output text
 			if (success)
 				SetText("Build successful");
 			else
 				SetText("Build failed");
+		}
+
+		/// <summary>
+		/// Moves a currently progressing progress bar forward one step
+		/// </summary>
+		public void IncrementProgressBar()
+		{
+			_progressBarStepCount++;
+			Unfreeze();
+			//statusBar.Progress(ref statusBarCookie, 1, UpdateStatusString(), _progressBarStepCount, _progressBarTotalSteps);
+			statusBar.Progress(ref statusBarCookie, 1, CurrentText, _progressBarStepCount, _progressBarTotalSteps);
+			Freeze();
 		}
 
 		#region Events
@@ -72,37 +103,41 @@ namespace BuildOnSave
 				return text;
 			}
 		}
+		private bool IsFrozen
+		{
+			get
+			{
+				int frozen;
+				statusBar.IsFrozen(out frozen);
+				return Utilities.IntToBool(frozen);
+			}
+		}
 
-		//private void InitializeProgressBar()
-		//{
-		//	Unfreeze();
-		//	statusBar.Progress(ref statusBarCookie, 1, CurrentText, _progressBarStepCount, _progressBarTotalSteps);
-		//	Freeze();
-		//}
-		//private void ClearProgressBar()
-		//{
-		//	Unfreeze();
-		//	statusBar.Progress(ref statusBarCookie, 0, CurrentText, _progressBarStepCount, _progressBarTotalSteps);
-		//	Freeze();
-		//}
-		//private void IncrementProgressBar()
-		//{
-		//	Unfreeze();
-		//	statusBar.Progress(ref statusBarCookie, 1, CurrentText, _progressBarStepCount, _progressBarTotalSteps);
-		//	Freeze();
-		//}
+		private void InitializeProgressBar()
+		{
+			_progressBarStepCount = 0;
+			_progressBarTotalSteps = (uint)(Utilities.GetNumberOfProjectsToBuild() * 2);
+
+			Unfreeze();
+			//statusBar.Progress(ref statusBarCookie, 1, CreateStatusString(), _progressBarStepCount, _progressBarTotalSteps);
+			statusBar.Progress(ref statusBarCookie, 1, CurrentText, _progressBarStepCount, _progressBarTotalSteps);
+			Freeze();
+		}
+		private void ClearProgressBar()
+		{
+			Unfreeze();
+			statusBar.Progress(ref statusBarCookie, 0, CurrentText, _progressBarStepCount, _progressBarTotalSteps);
+			Freeze();
+		}
 		private void Clear()
 		{
 			statusBar.Clear();
 		}
 		private void SetText(string text)
 		{
-			int frozen;
-			statusBar.IsFrozen(out frozen);
-			if (frozen == 0)
-			{
-				statusBar.SetText(text);
-			}
+			Unfreeze();
+			statusBar.SetText(text);
+			Freeze();
 		}
 		private void SetText(string text, short icon)
 		{
@@ -112,11 +147,15 @@ namespace BuildOnSave
 		}
 		private void StartIcon()
 		{
+			Unfreeze();
 			statusBar.Animation(1, _icon);
+			Freeze();
 		}
 		private void StopIcon()
 		{
+			Unfreeze();
 			statusBar.Animation(0, _icon);
+			Freeze();
 		}
 		private void SetIcon(short icon)
 		{
@@ -124,11 +163,13 @@ namespace BuildOnSave
 		}
 		private void Freeze()
 		{
-			statusBar.FreezeOutput(1);
+			if (!IsFrozen)
+				statusBar.FreezeOutput(1);
 		}
 		private void Unfreeze()
 		{
-			statusBar.FreezeOutput(0);
+			if (IsFrozen)
+				statusBar.FreezeOutput(0);
 		}
 		private void StartDots()
 		{
@@ -147,6 +188,32 @@ namespace BuildOnSave
 				_dots = ".";
 			else
 				_dots += ".";
+		}
+		private string GetStatusText()
+		{
+			var currCount = Math.Ceiling((decimal)(_progressBarStepCount * 2));
+			var totalCount = _progressBarTotalSteps / 2;
+			return $"{currCount} of {totalCount}";
+		}
+		private string CreateStatusString()
+		{
+			var currText = CurrentText;
+			var dotsRegex = new Regex(@"(\.)+", RegexOptions.IgnoreCase);
+			var dots = dotsRegex.Match(currText).Value;
+			var str = currText.Replace(".", "");
+			return str + " " + GetStatusText() + dots;
+		}
+		private string UpdateStatusString()
+		{
+			var statusRegex = new Regex(@"( \((\d)+ of (\d)+\))", RegexOptions.IgnoreCase);
+			var dotsRegex = new Regex(@"(\.)+", RegexOptions.IgnoreCase);
+			var currText = CurrentText;
+			var dots = dotsRegex.Match(currText).Value;
+			var status = statusRegex.Match(currText).Value;
+			if (string.IsNullOrEmpty(status))
+				return CreateStatusString();
+			else
+				return currText.Replace(status, "").Replace(".", "") + dots;
 		}
 		#endregion
 	}

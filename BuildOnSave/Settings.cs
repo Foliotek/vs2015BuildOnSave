@@ -165,7 +165,7 @@ namespace BuildOnSave
 
 			// If property isn't set, set BuildEntireSolution = true
 			if (!PropertyExists(BuildEntireSolutionPropName))
-				SetBool(BuildEntireSolutionPropName, false);
+				SetBool(BuildEntireSolutionPropName, true);
 
 			// If property does exist, ensure all defaults are present
 			else
