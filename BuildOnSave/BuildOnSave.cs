@@ -64,7 +64,7 @@ namespace BuildOnSave
 			base.Initialize();
 
 			// Get necessary utilities
-			_dte = Utilities.GetDTE();
+			dte = Utilities.GetDTE();
 			StatusBar = new StatusBar();
 
 			// Get and bind to events
@@ -77,7 +77,7 @@ namespace BuildOnSave
 		private void SetupEvents()
 		{
 			// Get necessary events opjects
-			_dteEvents = _dte.Events;
+			_dteEvents = dte.Events;
 			_docEvents = _dteEvents.DocumentEvents;
 			_buildEvents = _dteEvents.BuildEvents;
 
@@ -93,7 +93,7 @@ namespace BuildOnSave
 		#endregion
 
 		#region Properties
-		private DTE2 _dte { get; set; }
+		private DTE2 dte { get; set; }
 		private Events _dteEvents { get; set; }
 		private DocumentEvents _docEvents { get; set; }
 		private BuildEvents _buildEvents { get; set; }
@@ -110,18 +110,19 @@ namespace BuildOnSave
 		}
 		private void BuildEvents_OnBuildDone(vsBuildScope Scope, vsBuildAction Action)
 		{
-
 			// Ignore everything except for "build" action
 			if (Action == vsBuildAction.vsBuildActionBuild)
 				BuildFinish();
 		}
 		private void BuildEvents_OnBuildProjConfigBegin(string Project, string ProjectConfig, string Platform, string SolutionConfig)
 		{
+			// Increment progress bar when a project build starts
 			if (Settings.BuildEntireSolution)
 				StatusBar.IncrementProgressBar();
 		}
 		private void BuildEvents_OnBuildProjConfigDone(string Project, string ProjectConfig, string Platform, string SolutionConfig, bool Success)
 		{
+			// Increment progress bar when a project build ends
 			if (Settings.BuildEntireSolution)
 				StatusBar.IncrementProgressBar();
 		}
@@ -147,12 +148,12 @@ namespace BuildOnSave
 		#region Methods
 		private void BuildSolution()
 		{
-			var sln = _dte.Solution;
+			var sln = dte.Solution;
 			sln.SolutionBuild.Build();
 		}
 		private void BuildProject(Document document)
 		{
-			var sln = _dte.Solution;
+			var sln = dte.Solution;
 			var config = sln.SolutionBuild.ActiveConfiguration.Name;
 			var project = document.ProjectItem.ContainingProject;
 			sln.SolutionBuild.BuildProject(config, project.UniqueName);
@@ -166,7 +167,7 @@ namespace BuildOnSave
 
 		private void BuildFinish()
 		{
-			bool buildSuccess = Utilities.IntToBool(_dte.Solution.SolutionBuild.LastBuildInfo, 0);
+			bool buildSuccess = Utilities.IntToBool(dte.Solution.SolutionBuild.LastBuildInfo, 0);
 			StatusBar.BuildFinish(buildSuccess);
 			BuildRunning = false;
 		}

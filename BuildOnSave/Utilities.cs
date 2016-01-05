@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.VisualStudio;
@@ -55,12 +56,7 @@ namespace BuildOnSave
 		/// <returns></returns>
 		public static IEnumerable<Project> GetProjects()
 		{
-			foreach (var hier in GetProjectsInSolution())
-			{
-				var project = GetDTEProject(hier);
-				if (project != null)
-					yield return project;
-			}
+			return GetProjectsInSolution().Select(GetDTEProject).Where(project => project != null);
 		}
 
 		/// <summary>

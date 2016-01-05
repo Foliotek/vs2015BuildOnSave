@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="BuildOnSave.Foliotek.60a6530f-62f0-4afa-b8dc-f585da10640c" Version="1.0" Language="en-US" Publisher="Dustin Smith" />
+    <Identity Id="BuildOnSave.60a6530f-62f0-4afa-b8dc-f585da10640c" Version="1.0" Language="en-US" Publisher="Foliotek" />
     <DisplayName>BuildOnSave</DisplayName>
-    <Description xml:space="preserve">A plugin to build the containing project on document save</Description>
+    <Description xml:space="preserve">A plugin to automatically start a build upon document save</Description>
   </Metadata>
   <Installation>
     <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[14.0]" />

@@ -1,8 +1,7 @@
 ﻿using Microsoft.VisualStudio.Shell.Interop;
 using System;
-using System.Linq;
-using System.Timers;
 using System.Text.RegularExpressions;
+using System.Timers;
 
 namespace BuildOnSave
 {
@@ -65,10 +64,7 @@ namespace BuildOnSave
 			Unfreeze();
 
 			// Set output text
-			if (success)
-				SetText("Build successful");
-			else
-				SetText("Build failed");
+			SetText(success ? "Build successful" : "Build failed");
 		}
 
 		/// <summary>

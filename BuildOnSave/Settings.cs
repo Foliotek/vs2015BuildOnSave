@@ -13,9 +13,7 @@ namespace BuildOnSave
 		{
 			get
 			{
-				if (_sr == null)
-					_sr = new SettingsRepository();
-				return _sr;
+				return _sr ?? (_sr = new SettingsRepository());
 			}
 			set
 			{
@@ -224,10 +222,7 @@ namespace BuildOnSave
 		private IEnumerable<string> GetStringCollection(string key)
 		{
 			string val = GetString(key);
-			if (val.Contains(','))
-				return val.Split(',').Where(i => !string.IsNullOrWhiteSpace(i)).ToArray();
-			else
-				return new[] { val };
+			return val.Contains(',') ? val.Split(',').Where(i => !string.IsNullOrWhiteSpace(i)).ToArray() : new[] { val };
 		}
 
 		private void SetStringCollection(string key, IEnumerable<string> value)
@@ -249,7 +244,7 @@ namespace BuildOnSave
 		private string GetString(string key, string defaultValue = "")
 		{
 			string value;
-			SettingsStore.GetStringOrDefault(SettingsRootPath, key, "", out value);
+			SettingsStore.GetStringOrDefault(SettingsRootPath, key, defaultValue, out value);
 			return value;
 		}
 
