@@ -14,5 +14,5 @@ This extension provides an options page located under `Tools -> Options -> Build
 
 **Options**: [(**&lt;default&gt;**) &lt;description&gt;]
 - **Enabled**: (**true**)  Determines whether a build should be triggered upon saving a document.
-- **Build Entire Solution**: (**false**)  Determines whether the entire solution should be built or just the project containing the modified document.
+- **Build Entire Solution**: (**true**)  Determines whether the entire solution should be built or just the project containing the modified document.
 - **Extensions**: (**cs, config**)  Document extensions which trigger a build upon saving a document.
